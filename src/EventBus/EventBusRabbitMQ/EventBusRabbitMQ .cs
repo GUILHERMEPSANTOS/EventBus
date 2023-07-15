@@ -1,6 +1,6 @@
 using EventBus.Abstractions;
 using EventBus.Events;
-using RabbitMQ.Client;
+
 
 namespace EventBusRabbitMQ
 {
