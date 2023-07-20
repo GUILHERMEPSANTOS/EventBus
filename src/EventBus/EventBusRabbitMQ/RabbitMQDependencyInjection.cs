@@ -1,5 +1,8 @@
+using EventBus.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using RabbitMQ.Client;
 
 namespace EventBusRabbitMQ
 {
@@ -9,7 +12,29 @@ namespace EventBusRabbitMQ
         {
             var rabbitMQSettings = new RabbitMQSettings();
             configuration.GetSection("EventBus").Bind(rabbitMQSettings);
-    
+
+
+            services.AddSingleton<IRabbitMQPersistentConnection>(sp =>
+            {
+                var logger = sp.GetRequiredService<ILogger<DefaultRabbitMQPersistentConnection>>();
+
+                var factory = new ConnectionFactory
+                {
+                    HostName = rabbitMQSettings.HostName,
+                    UserName = rabbitMQSettings.UserName,
+                    Password = rabbitMQSettings.Password,
+                };
+
+                return new DefaultRabbitMQPersistentConnection(factory, logger, 5);
+            });
+
+            services.AddSingleton<IEventBus, EventBusRabbitMQ>(sp =>
+            {
+                var persistentConnection = sp.GetRequiredService<IRabbitMQPersistentConnection>();
+
+                return new EventBusRabbitMQ(persistentConnection, rabbitMQSettings.QueueName);
+            });
+
             return services;
         }
     }

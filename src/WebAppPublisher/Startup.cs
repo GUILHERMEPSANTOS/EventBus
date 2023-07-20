@@ -1,4 +1,5 @@
-
+using EventBusRabbitMQ;
+using WebAppPublisher.IntegrationEvents;
 
 namespace WebAppPublisher
 {
@@ -12,6 +13,8 @@ namespace WebAppPublisher
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services.AddScoped<ICustomerIntegrationEventService, CustomerIntegrationEventService>();
+            services.AddEventBus(Configuration);
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
         }
