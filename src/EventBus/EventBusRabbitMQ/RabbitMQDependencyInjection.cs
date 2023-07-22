@@ -31,8 +31,9 @@ namespace EventBusRabbitMQ
             services.AddSingleton<IEventBus, EventBusRabbitMQ>(sp =>
             {
                 var persistentConnection = sp.GetRequiredService<IRabbitMQPersistentConnection>();
+                var logger = sp.GetRequiredService<ILogger<EventBusRabbitMQ>>();
 
-                return new EventBusRabbitMQ(persistentConnection, rabbitMQSettings.QueueName);
+                return new EventBusRabbitMQ(persistentConnection, rabbitMQSettings.QueueName, logger);
             });
 
             return services;
