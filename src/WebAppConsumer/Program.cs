@@ -1,15 +1,23 @@
+using EventBus.Abstractions;
+using EventBusRabbitMQ;
+using WebAppConsumer.IntegrationEvents.EventHandling;
+using WebAppConsumer.IntegrationEvents.Events;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddEventBus(builder.Configuration);
+builder.Services.AddSingleton<IIntegrationEventHandler<CustomerCreatedIntegrationEvent>, CustomerCreatedIntegrationEventHandler>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+var eventBus = app.Services.GetRequiredService<IEventBus>();
+
+eventBus.Subscribe<CustomerCreatedIntegrationEvent, IIntegrationEventHandler<CustomerCreatedIntegrationEvent>>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
