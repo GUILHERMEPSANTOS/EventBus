@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Retry;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 
 namespace EventBusRabbitMQ
@@ -72,6 +73,8 @@ namespace EventBusRabbitMQ
             var eventName = typeof(TEvent).Name;
 
             DoInternalSubscription(eventName);
+
+            StartBasicConsume();
         }
 
         public void DoInternalSubscription(string eventName)
@@ -103,7 +106,35 @@ namespace EventBusRabbitMQ
                                  autoDelete: false,
                                  arguments: null);
 
+            channel.CallbackException += (object? sender, CallbackExceptionEventArgs e) =>
+            {
+                _consumerChannel.Dispose();
+                _consumerChannel = CreateConsumerChannel();
+                StartBasicConsume();
+            };
+
             return channel;
+        }
+
+        public void StartBasicConsume()
+        {
+            if (_consumerChannel is { })
+            {
+                var consumer = new AsyncEventingBasicConsumer(_consumerChannel);
+
+                consumer.Received += Consumer_Received;
+
+                _consumerChannel.BasicConsume(queue: _queueName
+                                             , autoAck: false
+                                             , consumer: consumer);
+            }
+        }
+
+        public async Task Consumer_Received(object sender, BasicDeliverEventArgs eventArgs)
+        {
+  
+
+            _consumerChannel.BasicAck(deliveryTag: eventArgs.DeliveryTag, multiple: false);
         }
 
         public void Dispose()
