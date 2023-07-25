@@ -132,8 +132,6 @@ namespace EventBusRabbitMQ
 
         public async Task Consumer_Received(object sender, BasicDeliverEventArgs eventArgs)
         {
-  
-
             _consumerChannel.BasicAck(deliveryTag: eventArgs.DeliveryTag, multiple: false);
         }
 
