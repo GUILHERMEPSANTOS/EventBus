@@ -23,6 +23,7 @@ namespace EventBusRabbitMQ
                     HostName = rabbitMQSettings.HostName,
                     UserName = rabbitMQSettings.UserName,
                     Password = rabbitMQSettings.Password,
+                    DispatchConsumersAsync = true,
                 };
 
                 return new DefaultRabbitMQPersistentConnection(factory, logger, 5);
