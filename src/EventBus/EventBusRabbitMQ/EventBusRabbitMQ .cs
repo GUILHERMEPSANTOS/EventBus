@@ -1,4 +1,5 @@
 using System.Net.Sockets;
+using System.Text;
 using System.Text.Json;
 using EventBus.Abstractions;
 using EventBus.Events;
@@ -77,7 +78,7 @@ namespace EventBusRabbitMQ
             StartBasicConsume();
         }
 
-        public void DoInternalSubscription(string eventName)
+        private void DoInternalSubscription(string eventName)
         {
             if (!_persistentConnection.IsConnected)
             {
@@ -89,7 +90,7 @@ namespace EventBusRabbitMQ
                                       , routingKey: eventName);
         }
 
-        public IModel CreateConsumerChannel()
+        private IModel CreateConsumerChannel()
         {
             if (!_persistentConnection.IsConnected)
             {
@@ -116,7 +117,7 @@ namespace EventBusRabbitMQ
             return channel;
         }
 
-        public void StartBasicConsume()
+        private void StartBasicConsume()
         {
             if (_consumerChannel is { })
             {
@@ -130,9 +131,19 @@ namespace EventBusRabbitMQ
             }
         }
 
-        public async Task Consumer_Received(object sender, BasicDeliverEventArgs eventArgs)
+        private async Task Consumer_Received(object sender, BasicDeliverEventArgs eventArgs)
         {
+            var eventName = eventArgs.RoutingKey;
+            var message = Encoding.UTF8.GetString(eventArgs.Body.Span);
+
+            await ProcessEvent(eventName, message);
+
             _consumerChannel.BasicAck(deliveryTag: eventArgs.DeliveryTag, multiple: false);
+        }
+
+        private Task ProcessEvent(string eventName, string message)
+        {
+            return Task.CompletedTask;
         }
 
         public void Dispose()
