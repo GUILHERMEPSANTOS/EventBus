@@ -30,6 +30,7 @@
             "name": "Consumer",
             "type": "coreclr",
             "request": "launch",
+            "preLaunchTask": "build",
             "program": "${workspaceFolder}/src/WebAppConsumer/bin/Debug/net7.0/WebAppConsumer.dll",
             "args": [],
             "cwd": "${workspaceFolder}/src/WebAppConsumer",
