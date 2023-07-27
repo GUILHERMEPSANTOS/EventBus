@@ -1,3 +1,4 @@
+using EventBus;
 using EventBus.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,9 +34,12 @@ namespace EventBusRabbitMQ
             {
                 var persistentConnection = sp.GetRequiredService<IRabbitMQPersistentConnection>();
                 var logger = sp.GetRequiredService<ILogger<EventBusRabbitMQ>>();
+                var subscriptionManager = sp.GetService<IEventBusSubscriptionManager>();
 
-                return new EventBusRabbitMQ(persistentConnection, rabbitMQSettings.QueueName, logger);
+                return new EventBusRabbitMQ(persistentConnection, rabbitMQSettings.QueueName, logger, subscriptionManager);
             });
+
+            services.AddSingleton<IEventBusSubscriptionManager, InMemoryEventBusSubscriptionsManager>();
 
             return services;
         }

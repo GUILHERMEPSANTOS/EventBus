@@ -1,6 +1,7 @@
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using EventBus;
 using EventBus.Abstractions;
 using EventBus.Events;
 using Microsoft.Extensions.Logging;
@@ -14,22 +15,23 @@ namespace EventBusRabbitMQ
 {
     public class EventBusRabbitMQ : IEventBus, IDisposable
     {
+        private readonly IEventBusSubscriptionManager _subscriptionManager;
         private readonly IRabbitMQPersistentConnection _persistentConnection;
-        private string _queueName;
         private ILogger<EventBusRabbitMQ> _logger;
+        private string _queueName;
         private readonly int _retryCount;
         private IModel _consumerChannel;
         const string BROKER_NAME = "event_bus";
 
-        public EventBusRabbitMQ(IRabbitMQPersistentConnection persistentConnection, string queueName, ILogger<EventBusRabbitMQ> logger, int retryCount = 5)
+        public EventBusRabbitMQ(IRabbitMQPersistentConnection persistentConnection, string queueName, ILogger<EventBusRabbitMQ> logger, IEventBusSubscriptionManager subscriptionManager, int retryCount = 5)
         {
-            _persistentConnection = persistentConnection;
+            _persistentConnection = persistentConnection ?? throw new ArgumentNullException(nameof(persistentConnection));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _subscriptionManager = subscriptionManager ?? new InMemoryEventBusSubscriptionsManager();
             _queueName = queueName;
-            _logger = logger;
-            _consumerChannel = CreateConsumerChannel();
             _retryCount = retryCount;
+            _consumerChannel = CreateConsumerChannel();
         }
-
         public void Publish(IntegrationEvent @event)
         {
             if (!_persistentConnection.IsConnected)
@@ -72,14 +74,19 @@ namespace EventBusRabbitMQ
             where TEventHandler : IIntegrationEventHandler
         {
             var eventName = typeof(TEvent).Name;
-
             DoInternalSubscription(eventName);
+
+            _subscriptionManager.AddSubscription<TEvent, TEventHandler>();
 
             StartBasicConsume();
         }
 
         private void DoInternalSubscription(string eventName)
         {
+            var containsKey = _subscriptionManager.HasSubscriptionForEvent(eventName);
+
+            if(containsKey) return;
+
             if (!_persistentConnection.IsConnected)
             {
                 _persistentConnection.TryConnect();
@@ -152,6 +159,8 @@ namespace EventBusRabbitMQ
             {
                 _consumerChannel.Dispose();
             }
+
+            _subscriptionManager.Clear();
         }
     }
 }
