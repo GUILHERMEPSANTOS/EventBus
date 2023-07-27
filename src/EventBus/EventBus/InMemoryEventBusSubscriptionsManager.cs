@@ -59,12 +59,22 @@ namespace EventBus
         {
             var eventKey = GetTypeName<TEvent>();
 
-            return _handlers.ContainsKey(eventKey);
+            return HasSubscriptionForEvent(eventKey);
+        }
+
+        public bool HasSubscriptionForEvent(string eventName)
+        {
+            return _handlers.ContainsKey(eventName);
         }
 
         public bool HasSubscriptionInfoForEvent(string eventName, Type? handlerType)
         {
             return _handlers[eventName].Any(handler => handler.HandlerType == handlerType);
         }
+
+        public void Clear()
+        {
+            _handlers.Clear();
+        }   
     }
 }
