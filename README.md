@@ -26,7 +26,8 @@ Como podem notar a implementação escolhida para exemplo foi o 🥕 RabbitMQ
 
 ![image](https://github.com/GUILHERMEPSANTOS/EventBus/assets/89268597/de6aeb0a-088e-49aa-8201-d4ae18c105b5)
 
-Olhando para esses arquivos e diretórios desse projeto, a princípio pode parecer estranho, mas existe sim um ponto de partida: o arquivo IEventBus.cs.
-[Texto do link](
-./src/EventBus/EventBus/Abstractions/IEventBus.cs)
+Olhando para esses arquivos e diretórios desse projeto, a princípio pode parecer estranho, mas existe sim um ponto de partida: 
+- o arquivo
+[IEventBus.cs](
+./src/EventBus/EventBus/Abstractions/IEventBus.cs) nesse arquivo, definimos o contrato para o nosso event bus, estabelecendo as bases para o sistema de comunicação entre componentes
 
