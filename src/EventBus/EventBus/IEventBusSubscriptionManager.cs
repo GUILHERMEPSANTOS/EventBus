@@ -11,6 +11,8 @@ namespace EventBus
       
         bool HasSubscriptionForEvent<TEvent>() where TEvent : IntegrationEvent;
         bool HasSubscriptionForEvent(string eventName);
+        IEnumerable<SubscriptionInfo> GetHandlerForEvent(string eventName);
+        Type GetEventTypeByName(string eventName);
         void Clear();
     }
 }

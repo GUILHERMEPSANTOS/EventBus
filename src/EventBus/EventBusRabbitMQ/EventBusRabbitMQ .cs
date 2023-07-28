@@ -10,20 +10,30 @@ using Polly.Retry;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EventBusRabbitMQ
 {
     public class EventBusRabbitMQ : IEventBus, IDisposable
     {
+        const string BROKER_NAME = "event_bus";
+        private static readonly JsonSerializerOptions s_indentedOptions = new() { WriteIndented = true };
+        private static readonly JsonSerializerOptions s_caseInsensitiveOptions = new() { PropertyNameCaseInsensitive = true };
+
         private readonly IEventBusSubscriptionManager _subscriptionManager;
         private readonly IRabbitMQPersistentConnection _persistentConnection;
+        private readonly IServiceProvider _serviceProvider;
         private ILogger<EventBusRabbitMQ> _logger;
         private string _queueName;
         private readonly int _retryCount;
         private IModel _consumerChannel;
-        const string BROKER_NAME = "event_bus";
 
-        public EventBusRabbitMQ(IRabbitMQPersistentConnection persistentConnection, string queueName, ILogger<EventBusRabbitMQ> logger, IEventBusSubscriptionManager subscriptionManager, int retryCount = 5)
+        public EventBusRabbitMQ(IRabbitMQPersistentConnection persistentConnection
+                               , string queueName
+                               , ILogger<EventBusRabbitMQ> logger
+                               , IEventBusSubscriptionManager subscriptionManager
+                               , IServiceProvider serviceProvider
+                               , int retryCount = 5)
         {
             _persistentConnection = persistentConnection ?? throw new ArgumentNullException(nameof(persistentConnection));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -31,6 +41,7 @@ namespace EventBusRabbitMQ
             _queueName = queueName;
             _retryCount = retryCount;
             _consumerChannel = CreateConsumerChannel();
+            _serviceProvider = serviceProvider;
         }
         public void Publish(IntegrationEvent @event)
         {
@@ -71,7 +82,7 @@ namespace EventBusRabbitMQ
 
         public void Subscribe<TEvent, TEventHandler>()
             where TEvent : IntegrationEvent
-            where TEventHandler : IIntegrationEventHandler
+            where TEventHandler : IIntegrationEventHandler<TEvent>
         {
             var eventName = typeof(TEvent).Name;
             DoInternalSubscription(eventName);
@@ -85,7 +96,7 @@ namespace EventBusRabbitMQ
         {
             var containsKey = _subscriptionManager.HasSubscriptionForEvent(eventName);
 
-            if(containsKey) return;
+            if (containsKey) return;
 
             if (!_persistentConnection.IsConnected)
             {
@@ -148,9 +159,27 @@ namespace EventBusRabbitMQ
             _consumerChannel.BasicAck(deliveryTag: eventArgs.DeliveryTag, multiple: false);
         }
 
-        private Task ProcessEvent(string eventName, string message)
+        private async Task ProcessEvent(string eventName, string message)
         {
-            return Task.CompletedTask;
+            if (_subscriptionManager.HasSubscriptionForEvent(eventName))
+            {
+                await using var scope = _serviceProvider.CreateAsyncScope();
+                var subscriptions = _subscriptionManager.GetHandlerForEvent(eventName);
+
+                foreach (var subscription in subscriptions)
+                {
+                    var eventType = _subscriptionManager.GetEventTypeByName(eventName);
+                    var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
+                    var handler = scope.ServiceProvider.GetService(concreteType);
+
+                    if (handler is null) continue;
+
+                    var integrationEvent = JsonSerializer.Deserialize(message, eventType, s_caseInsensitiveOptions);
+
+                    await Task.Yield();
+                    await (Task)concreteType.GetMethod("Handle").Invoke(handler, new object[] { integrationEvent });
+                }
+            }
         }
 
         public void Dispose()

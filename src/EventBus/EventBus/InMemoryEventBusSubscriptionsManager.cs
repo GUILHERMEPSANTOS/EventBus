@@ -45,6 +45,11 @@ namespace EventBus
             _handlers[eventName].Add(SubscriptionInfo.Typed(handlerType));
         }
 
+        public IEnumerable<SubscriptionInfo> GetHandlerForEvent(string eventName)
+        {
+            return _handlers[eventName];
+        }
+
         private string GetTypeName<TEvent>()
         {
             return typeof(TEvent).Name;
@@ -75,6 +80,11 @@ namespace EventBus
         public void Clear()
         {
             _handlers.Clear();
-        }   
+        }
+
+        public Type GetEventTypeByName(string eventName)
+        {
+            return _eventTypeManager.GetEventTypeByName(eventName);
+        }
     }
 }

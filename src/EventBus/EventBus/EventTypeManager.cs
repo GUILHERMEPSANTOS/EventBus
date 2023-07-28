@@ -1,3 +1,5 @@
+using EventBus.Events;
+
 namespace EventBus
 {
     public class EventTypeManager : IEventTypeManager
@@ -13,11 +15,16 @@ namespace EventBus
         {
             var hasEventType = ContainsEventType<TEvent>();
 
-            if(hasEventType) return;
+            if (hasEventType) return;
 
             var eventType = GetEventType<TEvent>();
 
             _eventTypes.Add(eventType);
+        }
+
+        public Type GetEventTypeByName(string eventName)
+        {
+            return _eventTypes.SingleOrDefault(eventType => eventType.Name == eventName, typeof(IntegrationEvent));
         }
 
         private bool ContainsEventType<TEvent>()

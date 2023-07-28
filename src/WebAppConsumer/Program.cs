@@ -5,18 +5,18 @@ using WebAppConsumer.IntegrationEvents.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddEventBus(builder.Configuration);
 
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddEventBus(builder.Configuration);
 builder.Services.AddSingleton<IIntegrationEventHandler<CustomerCreatedIntegrationEvent>, CustomerCreatedIntegrationEventHandler>();
 
 var app = builder.Build();
 
 var eventBus = app.Services.GetRequiredService<IEventBus>();
 
-eventBus.Subscribe<CustomerCreatedIntegrationEvent, IIntegrationEventHandler<CustomerCreatedIntegrationEvent>>();
+eventBus.Subscribe<CustomerCreatedIntegrationEvent, CustomerCreatedIntegrationEventHandler>();
 
 if (app.Environment.IsDevelopment())
 {

@@ -36,7 +36,11 @@ namespace EventBusRabbitMQ
                 var logger = sp.GetRequiredService<ILogger<EventBusRabbitMQ>>();
                 var subscriptionManager = sp.GetService<IEventBusSubscriptionManager>();
 
-                return new EventBusRabbitMQ(persistentConnection, rabbitMQSettings.QueueName, logger, subscriptionManager);
+                return new EventBusRabbitMQ(persistentConnection: persistentConnection
+                                            , queueName: rabbitMQSettings.QueueName
+                                            , logger: logger
+                                            , subscriptionManager: subscriptionManager
+                                            , serviceProvider: sp);
             });
 
             services.AddSingleton<IEventBusSubscriptionManager, InMemoryEventBusSubscriptionsManager>();
