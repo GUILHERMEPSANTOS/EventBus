@@ -31,3 +31,22 @@ Olhando para esses arquivos e diretórios desse projeto, a princípio pode parec
 [IEventBus.cs](
 ./src/EventBus/EventBus/Abstractions/IEventBus.cs) nesse arquivo, definimos o contrato para o nosso event bus, estabelecendo as bases para o sistema de comunicação entre componentes
 
+
+```cs
+using EventBus.Events;
+
+namespace EventBus.Abstractions
+{
+    public interface IEventBus
+    {
+        void Publish(IntegrationEvent @event);
+
+        void Subscribe<TEvent, TEventHandler>()
+            where TEvent : IntegrationEvent
+            where TEventHandler : IIntegrationEventHandler<TEvent>;
+    }
+}
+```
+O event bus possui dois métodos essenciais: `Publish` e `Subscribe`. O método `Publish` é responsável por difundir o evento de integração para os microsserviços ou aplicativos externos que assinarem esse evento. É usado pelo microsserviço que está publicando o evento.
+
+Já os métodos ``Subscribe`` são utilizados pelos microsserviços que desejam receber eventos. Esses métodos possuem dois argumentos: o primeiro é o evento de integração que desejam assinar, e o segundo é o manipulador de eventos de integração (ou método de retorno de chamada) a ser executado quando o microsserviço receptor obtiver a mensagem do evento de integração. Com isso, o event bus facilita a comunicação e sincronização de eventos entre diferentes partes da aplicação. [Para mais informações](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/multi-container-microservice-net-applications/integration-event-based-microservice-communications)
