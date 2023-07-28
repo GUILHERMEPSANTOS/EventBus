@@ -26,13 +26,14 @@ Como podem notar a implementação escolhida para exemplo foi o 🥕 RabbitMQ
 
 ![image](https://github.com/GUILHERMEPSANTOS/EventBus/assets/89268597/de6aeb0a-088e-49aa-8201-d4ae18c105b5)
 
+## Interface EventBus
+
 Olhando para esses arquivos e diretórios desse projeto, a princípio pode parecer estranho, mas existe sim um ponto de partida: 
 - o arquivo
 [IEventBus.cs](
 ./src/EventBus/EventBus/Abstractions/IEventBus.cs) nesse arquivo, definimos o contrato para o nosso event bus, estabelecendo as bases para o sistema de comunicação entre componentes
 
-
-```cs
+ ```cs
 using EventBus.Events;
 
 namespace EventBus.Abstractions
@@ -50,3 +51,13 @@ namespace EventBus.Abstractions
 O event bus possui dois métodos essenciais: `Publish` e `Subscribe`. O método `Publish` é responsável por difundir o evento de integração para os microsserviços ou aplicativos externos que assinarem esse evento. É usado pelo microsserviço que está publicando o evento.
 
 Já os métodos ``Subscribe`` são utilizados pelos microsserviços que desejam receber eventos. Esses métodos possuem dois argumentos: o primeiro é o evento de integração que desejam assinar, e o segundo é o manipulador de eventos de integração (ou método de retorno de chamada) a ser executado quando o microsserviço receptor obtiver a mensagem do evento de integração. Com isso, o event bus facilita a comunicação e sincronização de eventos entre diferentes partes da aplicação. [Para mais informações](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/multi-container-microservice-net-applications/integration-event-based-microservice-communications)
+
+## IIntegrationEventHandler e classe base de eventos
+A interface `IEventBus` determina que o tipo `TEvent` deve ser um `IntegrationEvent`, e a interface do Handler deve herdar de `IIntegrationEventHandler`. O Handler receberá o `TEvent`.
+
+- [IIntegrationEventHandler.cs](./src/EventBus/EventBus/Abstractions/IIntegrationEventHandler.cs)
+- [IntegrationEvent.cs](./src/EventBus/EventBus/Events/IntegrationEvent.cs)
+
+
+
+
